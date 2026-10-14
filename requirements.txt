@@ -1,0 +1,5 @@
+pymavlink>=2.4.50
+liboqs-python>=0.12.0
+pytest>=8.0
+ruff>=0.5
+bandit>=1.7

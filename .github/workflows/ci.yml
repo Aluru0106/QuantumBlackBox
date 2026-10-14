@@ -1,0 +1,27 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  secure-coding-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (chain logger tests need no liboqs)
+        run: pip install pytest ruff bandit pymavlink
+      - name: Lint (ruff)
+        run: ruff check qbb tests *.py
+      - name: SAST (bandit, fail on medium+)
+        run: bandit -r qbb -ll
+      - name: Secret scan (fail if private keys/tokens are committed)
+        run: |
+          if grep -rEn "BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|AKIA[0-9A-Z]{16}" --exclude-dir=.git .; then
+            echo "secret found"; exit 1; fi
+      - name: Unit tests
+        run: pytest -q

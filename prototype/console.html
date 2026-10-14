@@ -1,0 +1,102 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuantumBlackBox Console</title>
+<style>
+:root{--bg:#f6f1f3;--card:#fff;--ink:#2b2b2b;--mut:#6b6270;--mar:#8b1538;--mar2:#630a27;--ok:#1f8a4c;--bad:#c0392b;--line:#e6dce0;--term:#15101a;--termfg:#e8e0ea}
+@media(prefers-color-scheme:dark){:root{--bg:#18121a;--card:#231a26;--ink:#eee6f0;--mut:#a698ab;--line:#3a2d3e;--term:#0d0a10}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,Segoe UI,sans-serif}
+header{background:linear-gradient(90deg,var(--mar2),var(--mar));color:#fff;padding:14px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px}header small{opacity:.8}
+.pills{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.15);padding:4px 12px;border-radius:99px;font-size:13px}.pill b{font-family:ui-monospace,monospace}
+main{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:16px 24px;max-width:1500px;margin:auto}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.steps h3{margin:14px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}.steps h3:first-child{margin-top:0}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 12px;text-align:left;width:100%;margin:3px 0;display:flex;gap:8px;align-items:center}
+button:hover{border-color:var(--mar)}button.pri{background:var(--mar);color:#fff;border-color:var(--mar)}button.dng{border-color:#d9a3a3;color:var(--bad)}
+button .n{background:var(--mar);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+button small{color:var(--mut);display:block;font-size:12px}button.pri small{color:#f3d5de}
+.row{display:flex;gap:6px;align-items:center}.row input{width:64px;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.verdict{display:flex;gap:12px;flex-wrap:wrap}.v{flex:1;min-width:220px;padding:12px 14px;border-radius:10px;border:1px solid var(--line)}
+.v b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}.v span{font-size:18px;font-weight:700}
+.v.ok{border-color:var(--ok)}.v.ok span{color:var(--ok)}.v.bad{border-color:var(--bad);background:rgba(192,57,43,.08)}.v.bad span{color:var(--bad)}
+.strip{display:flex;flex-wrap:wrap;gap:2px;margin-top:10px}.strip i{width:7px;height:14px;border-radius:2px;background:var(--ok);opacity:.85}.strip i.b{background:var(--bad);opacity:1}
+.tabs{display:flex;gap:4px;margin:14px 0 8px}.tabs a{padding:7px 14px;border-radius:8px;cursor:pointer;color:var(--mut)}.tabs a.on{background:var(--mar);color:#fff}
+#term{background:var(--term);color:var(--termfg);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;border-radius:10px;padding:12px;height:340px;overflow:auto;white-space:pre-wrap}
+#term .cmd{color:#ffbf00}#term .ok{color:#6fdc9a}#term .bad{color:#ff7b72}#term .dim{color:#8f8498}
+.shell{display:flex;gap:6px;margin-top:8px}.shell input{flex:1;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:13px ui-monospace,monospace}
+.shell button{width:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mut);font-size:12px}
+td.m{font-family:ui-monospace,monospace}tr.bad td{background:rgba(192,57,43,.12)}
+.scroll{max-height:380px;overflow:auto}.hm td{text-align:center;font-weight:700}.hm td.y{background:#8fc9a0;color:#1b3a26}.hm td.n{background:#e4b7b7;color:#5a1d1d}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}.kpi{border:1px solid var(--line);border-radius:10px;padding:10px}.kpi b{font-size:20px;display:block}.kpi small{color:var(--mut)}
+.mut{color:var(--mut)}
+</style></head><body>
+<header><h1>QuantumBlackBox <small>Control Console · Dhanya · 20CYS495</small></h1>
+<div class="pills"><span class="pill">swtpm <b id="p-tpm">…</b></span><span class="pill">PCR 23 <b id="p-pcr">…</b></span><span class="pill">entries <b id="p-n">0</b></span><span class="pill">signature <b id="p-sig">no</b></span></div></header>
+<main>
+<aside class="card steps">
+<h3>1 · Setup</h3>
+<button onclick="run('deps')"><span class="n">0</span><div>Install Python packages<small>pymavlink, dilithium-py (once)</small></div></button>
+<button onclick="run('tpm')"><span class="n">1</span><div>Start / restart software TPM<small>swtpm, PCR 23 back to zero</small></div></button>
+<button onclick="run('init')"><span class="n">2</span><div>Initialise new log<small>fresh key, anchored at PCR 23 = 0</small></div></button>
+<h3>2 · Record real flight</h3>
+<button class="pri" onclick="run('record')"><span class="n">3</span><div>Record real PX4 flight data<small>replay → MAVLink → logger (40 entries)</small></div></button>
+<h3>3 · Prove</h3>
+<button onclick="run('verify')"><span class="n">4</span><div>Verify log (hash+MAC+TPM)<small>expect: LOG OK</small></div></button>
+<button onclick="run('sign')"><span class="n">5</span><div>Sign chain head, ML-DSA-65<small>post-quantum signature</small></div></button>
+<button onclick="run('sigverify')"><span class="n">6</span><div>Verify signature</div></button>
+<h3>4 · Attack</h3>
+<div class="row"><input id="an" type="number" value="10" min="1"><span class="mut">entry no. / count</span></div>
+<button class="dng" onclick="run('tamper')">Edit entry N</button>
+<button class="dng" onclick="run('truncate')">Truncate last N entries</button>
+<button class="dng" onclick="run('forge')">Forge entry N (recompute hashes)</button>
+<button onclick="run('restore')">↩ Restore original log</button>
+<h3>5 · Evaluate</h3>
+<button onclick="run('evaluate')"><span class="n">7</span><div>8 attacks × 4 schemes<small>writes results.json (100 trials)</small></div></button>
+</aside>
+<section>
+<div class="card"><div class="verdict">
+<div class="v" id="v1"><b>Live chain check (hash + MAC)</b><span>no log yet</span></div>
+<div class="v" id="v2"><b>Last full verify (with TPM)</b><span>not run</span></div></div>
+<div class="strip" id="strip"></div><div class="mut" style="font-size:12px;margin-top:6px">each block = one log entry · green intact · red broken from the first tampered entry</div></div>
+<div class="tabs"><a class="on" data-t="t1">Terminal</a><a data-t="t2">Log entries</a><a data-t="t3">Results</a><a data-t="t4">Signature</a></div>
+<div class="card" id="t1"><div id="term"><span class="dim">Press a button on the left, or type any command below. Output streams here.</span></div>
+<div class="shell"><input id="cmd" placeholder="any shell command, e.g. python3 logger.py verify" onkeydown="if(event.key==='Enter')shell()"><button onclick="shell()">Run</button><button onclick="stopJob()">Stop</button><button onclick="document.getElementById('term').innerHTML=''">Clear</button></div></div>
+<div class="card" id="t2" hidden><div class="scroll"><table><thead><tr><th>#</th><th>type</th><th>hash</th><th>status</th><th>payload</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="card" id="t3" hidden><div id="res" class="mut">Run “Evaluate” to fill this in.</div></div>
+<div class="card" id="t4" hidden><div id="sig" class="mut">No signature yet. Run step 5.</div></div>
+</section></main>
+<script>
+const T='__TOKEN__',H={'X-Token':T,'Content-Type':'application/json'};
+const $=id=>document.getElementById(id);let cur=null,lastVerify=null;
+const get=async p=>(await fetch(p,{headers:H})).json();
+const post=async(p,b)=>(await fetch(p,{method:'POST',headers:H,body:JSON.stringify(b)})).json();
+function out(t,c){const d=$('term'),s=document.createElement('div');if(c)s.className=c;s.textContent=t;d.appendChild(s);d.scrollTop=d.scrollHeight}
+async function follow(id,label){cur=id;let from=0;out('$ '+label,'cmd');
+ for(;;){const j=await get('/api/job/'+id+'/'+from);from=j.next;
+  for(const l of j.lines){const c=/TAMPERING|invalid|Error|Traceback|FAIL|mismatch/i.test(l)?'bad':/LOG OK|OK|valid|signed|VALID/.test(l)?'ok':'';out(l,c);
+   if(/LOG OK/.test(l))lastVerify=['ok','LOG OK'];if(/TAMPERING DETECTED/.test(l))lastVerify=['bad',l.replace('TAMPERING DETECTED','TAMPERED')]}
+  if(j.done){out('[exit '+j.rc+']','dim');break}await new Promise(r=>setTimeout(r,350))}
+ cur=null;refresh();if(label.startsWith('evaluate'))loadRes()}
+async function run(key){const n=$('an').value;const r=await post('/api/run',{key,n});follow(r.id,key+((['tamper','truncate','forge'].includes(key))?' '+n:''))}
+async function shell(){const c=$('cmd').value.trim();if(!c)return;const r=await post('/api/shell',{cmd:c});follow(r.id,c)}
+function stopJob(){if(cur)post('/api/stop',{id:cur})}
+document.querySelectorAll('.tabs a').forEach(a=>a.onclick=()=>{document.querySelectorAll('.tabs a').forEach(x=>x.classList.toggle('on',x===a));['t1','t2','t3','t4'].forEach(t=>$(t).hidden=t!==a.dataset.t);if(a.dataset.t==='t3')loadRes();if(a.dataset.t==='t4')loadSig()});
+function setV(id,cls,txt){const e=$(id);e.className='v '+cls;e.querySelector('span').textContent=txt}
+async function refresh(){
+ const s=await get('/api/state');$('p-tpm').textContent=s.swtpm?'running':'stopped';$('p-pcr').textContent=s.pcr23?s.pcr23.slice(0,10)+'…':'n/a';$('p-sig').textContent=s.sig_exists?'yes':'no';
+ const l=await get('/api/log');$('p-n').textContent=l.count;
+ if(!l.count)setV('v1','', 'no log yet');else if(l.bad===null)setV('v1','ok','INTACT · '+l.count+' entries');else setV('v1','bad','BROKEN at entry '+l.bad+' · '+l.reason);
+ if(lastVerify)setV('v2',lastVerify[0],lastVerify[1]);
+ $('strip').innerHTML=(l.strip||[]).map((v,i)=>'<i class="'+(v?'':'b')+'" title="#'+i+'"></i>').join('');
+ $('rows').innerHTML=l.entries.map(e=>'<tr class="'+(e.ok?'':'bad')+'"><td>'+e.seq+'</td><td>'+e.type+'</td><td class="m">'+e.hash+'</td><td>'+(e.ok?'ok':e.why)+'</td><td class="m">'+(e.payload||'').replace(/</g,'&lt;')+'</td></tr>').join('')}
+async function loadRes(){const r=await get('/api/results');if(!r)return;
+ let h='<div class="kpis"><div class="kpi"><b>'+r.log_entries+'</b><small>real log entries</small></div><div class="kpi"><b>'+r.false_positives+'</b><small>false positives</small></div><div class="kpi"><b>'+r.overhead.chain_mac_us+' µs</b><small>chain+MAC per entry</small></div><div class="kpi"><b>'+r.overhead.tpm_extend_ms+' ms</b><small>TPM PCR extend</small></div></div>';
+ h+='<table class="hm"><tr><th>Attack</th>'+r.schemes.map(s=>'<th>'+s.name+'</th>').join('')+'</tr>';
+ r.attacks.forEach(a=>{h+='<tr><td style="text-align:left;font-weight:400">'+a.name+'</td>'+r.schemes.map(s=>{const v=r.matrix[a.key][s.key];return '<td class="'+(v>=100?'y':'n')+'">'+v+'%</td>'}).join('')+'</tr>'});
+ h+='</table><h4>PQC benchmark</h4><table><tr><th>Algorithm</th><th>keygen ms</th><th>sign ms</th><th>verify ms</th><th>public key B</th><th>signature B</th></tr>'+r.bench.map(b=>'<tr><td>'+b.alg+'</td><td>'+b.keygen_ms+'</td><td>'+b.sign_ms+'</td><td>'+b.verify_ms+'</td><td>'+b.pub_bytes+'</td><td>'+b.sig_bytes+'</td></tr>').join('')+'</table><p class="mut">Source data: '+r.source+'. Machine: '+r.machine.note+'.</p>';
+ $('res').innerHTML=h}
+async function loadSig(){const s=await get('/api/sig');if(!s)return;$('sig').innerHTML='<table><tr><th>algorithm</th><td>'+s.alg+'</td></tr><tr><th>signed message</th><td class="m">'+s.message+'</td></tr><tr><th>public key</th><td class="m">'+s.pub+'</td></tr><tr><th>signature</th><td class="m">'+(s.sig||'')+'</td></tr></table>'}
+refresh();setInterval(()=>{refresh().catch(()=>{})},2500);
+</script></body></html>

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.key
+flight.log.jsonl*
+log.sig.json
+.pytest_cache/
+.ruff_cache/
